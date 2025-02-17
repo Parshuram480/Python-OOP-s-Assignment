@@ -1,39 +1,78 @@
 class Book:
-    def __init__(self, title, author, isbn):
+    def __init__(self, title, author, isbn, status="Available"):
         self.title = title
         self.author = author
         self.isbn = isbn
-        self.status = "Available"
+        self.status = status
 
-    # function for the borrow book
-    def borrowed_book(self):
+    def book_borrow_book(self):
         if self.status == "Available":
             self.status = "Borrowed"
-            return f"The {self.title} Book is Borrowed."
-        else:
-            return f"Sorry...The {self.title} Book is Not Available"
+            self.book_update_file()
+            return f"the book {self.title} is borrowed."
+        return f"Sorry, the book {self.title} is not available."
 
-    # function for the return book
-    def returned_book(self):
+    def book_return_book(self):
         if self.status == "Borrowed":
             self.status = "Available"
-            return f"The {self.title} Book is Returned and Now Available"
-        else:
-            return f"The {self.title} Book is already availabe or not borrowed"
+            self.book_update_file()
+            return f"The book {self.title} is returned and now available."
+        return f"The book {self.title} is already available or not borrowed."
 
-    # To display book
-    def display_info(self):
+    def book_display_info(self):
         return f"Title:{self.title}, Author:{self.author}, ISBN:{self.isbn}, Status:{self.status}"
 
+    def book_save_to_file(self):
+        with open("books.txt", "a") as f:
+            f.write(f"{self.title},{self.author},{self.isbn},{self.status}\n")
 
- 
-# Class for the digital books which inherits the parent class book
+    def book_update_file(self):
+        books = book_load_books()
+        with open("books.txt", "w") as f:
+            for book in books:
+                if book.isbn == self.isbn:
+                    f.write(f"{self.title},{self.author},{self.isbn},{self.status}\n")
+                else:
+                    f.write(f"{book.title},{book.author},{book.isbn},{book.status}\n")
+
+
+# digigital book class which inherits the Book class
 class DigitalBook(Book):
-    def __init__(self, title, author, isbn, file_format):
-        super().__init__(title, author, isbn)
+    def __init__(self, title, author, isbn, file_format, status="Available"):
+        super().__init__(title, author, isbn, status)
         self.file_format = file_format
 
-    # Display info function which override the perent class method
-    def display_info(self):
-        info = super().display_info()
-        return f"{info}, File Format: {self.file_format}"
+    def book_display_info(self):
+        return f"{super().book_display_info()}, File Format: {self.file_format}"
+
+    def book_save_to_file(self):
+        with open("books.txt", "a") as f:
+            f.write(f"{self.title},{self.author},{self.isbn},{self.status},{self.file_format}\n")
+
+    def book_update_file(self):
+        books = book_load_books()
+        with open("books.txt", "w") as f:
+            for book in books:
+                if book.isbn == self.isbn:
+                    f.write(f"{self.title},{self.author},{self.isbn},{self.status},{self.file_format}\n")
+                else:
+                    if isinstance(book, DigitalBook):
+                        f.write(f"{book.title},{book.author},{book.isbn},{book.status},{book.file_format}\n")
+                    else:
+                        f.write(f"{book.title},{book.author},{book.isbn},{book.status}\n")
+
+# load the to read the file
+def book_load_books():
+    books = []
+    try:
+        with open("books.txt", "r") as f:
+            for line in f:
+                data = line.strip().split(",")
+                if len(data) == 5:
+                    book = DigitalBook(data[0], data[1], data[2], data[4], data[3])
+                else:
+                    book = Book(data[0], data[1], data[2], data[3])
+                books.append(book)
+    except FileNotFoundError:
+        pass
+    return books
